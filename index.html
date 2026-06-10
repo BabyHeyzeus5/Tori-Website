@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>for you, always</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #fff5f8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      color: #3d1a26;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
+    }
+    .container {
+      width: 100%;
+      max-width: 390px;
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: #993556;
+      margin-bottom: 6px;
+    }
+    header p {
+      font-size: 0.9rem;
+      color: #D4537E;
+      line-height: 1.6;
+    }
+    .photo-wrap {
+      width: 100%;
+      aspect-ratio: 4/5;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 3px solid #F4C0D1;
+      position: relative;
+      background: #FBEAF0;
+    }
+    .photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: opacity 0.4s ease;
+    }
+    .photo-wrap img.fade { opacity: 0; }
+    .play-btn {
+      width: 100%;
+      background: #D4537E;
+      color: #fff5f8;
+      border: none;
+      border-radius: 50px;
+      padding: 16px;
+      font-size: 1.05rem;
+      font-weight: 500;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .play-btn:active { transform: scale(0.97); background: #993556; }
+    .now-playing {
+      min-height: 1.2rem;
+      font-size: 0.85rem;
+      color: #993556;
+    }
+    .progress {
+      width: 100%;
+      height: 3px;
+      background: #F4C0D1;
+      border-radius: 2px;
+    }
+    .progress-fill {
+      height: 3px;
+      background: #D4537E;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s;
+    }
+    footer { font-size: 0.8rem; color: #ED93B1; padding-bottom: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>I love and miss you!</h1>
+      <p>I hope you can enjoy these snippets from me. Love Andrew</p>
+    </header>
+
+    <div class="photo-wrap">
+      <img src="" alt="a photo for you" id="photo" />
+    </div>
+
+    <button class="play-btn" id="play-btn">&#9825; play a message</button>
+    <div class="now-playing" id="now-playing"></div>
+    <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <footer>&#9825; made with love</footer>
+  </div>
+
+  <script>
+    let snippets = [];
+    let audio = null;
+    const btn = document.getElementById('play-btn');
+    const label = document.getElementById('now-playing');
+    const fill = document.getElementById('progress-fill');
+    const photo = document.getElementById('photo');
+
+    fetch('data.json')
+      .then(r => r.json())
+      .then(data => {
+        snippets = data;
+        if (snippets.length) {
+          photo.src = snippets[Math.floor(Math.random() * snippets.length)].photo;
+        }
+      });
+
+    function swapPhoto(src) {
+      photo.classList.add('fade');
+      setTimeout(() => {
+        photo.src = src;
+        photo.onload = () => photo.classList.remove('fade');
+      }, 400);
+    }
+
+    btn.addEventListener('click', () => {
+      if (!snippets.length) return;
+      if (audio) { audio.pause(); audio.currentTime = 0; }
+
+      const pick = snippets[Math.floor(Math.random() * snippets.length)];
+
+      swapPhoto(pick.photo);
+      audio = new Audio(pick.file);
+      fill.style.width = '0%';
+      label.textContent = pick.title;
+      btn.textContent = '\u2665 playing...';
+
+      audio.addEventListener('timeupdate', () => {
+        const pct = (audio.currentTime / audio.duration) * 100 || 0;
+        fill.style.width = pct + '%';
+      });
+
+      audio.addEventListener('ended', () => {
+        btn.textContent = '\u2665 play another';
+        fill.style.width = '0%';
+      });
+
+      audio.play();
+    });
+  </script>
+</body>
+</html>
